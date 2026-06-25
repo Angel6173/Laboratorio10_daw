@@ -1,0 +1,39 @@
+env/
+venv/
+.venv/
+EntorninVirtualin/
+
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+db.sqlite3
+db.sqlite3-journal
+
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+*.log
+crashdump.log
+
+# Credenciales — nunca subir al repositorio
+.env
+enrollments/.env
+
+# Informe LaTeX (se entrega por separado)
+informe/
+
+# ZIP original del profesor
+enrollment-certificate.zip
+
+# Dependencias Node
+enrollment-certificate/node_modules/
+
+# Build de producción
+enrollment-certificate/dist/
