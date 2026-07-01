@@ -37,3 +37,16 @@ enrollment-certificate.zip
 node_modules/
 dist/
 .vercel/
+
+# Documentación interna — no forma parte de la entrega
+DOCUMENTACION.md
+DOCUMENTACION_SIMPLE.md
+
+# Archivo vacío que dejó 'startapp' (los modelos reales están en sismat/models/)
+enrollments/sismat/models.py
+
+# Carpeta temporal / scratchpad y otros que no aporta al proyecto
+*.tmp
+*.bak
+Thumbs.db
+.DS_Store

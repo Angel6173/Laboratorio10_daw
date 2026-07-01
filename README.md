@@ -214,21 +214,34 @@ Abre `http://localhost:5173`, inicia sesión con tu superusuario y navega el pan
 
 ## Despliegue en Vercel
 
+> ⚠️ **En Vercel se despliega SOLO el frontend** (`frontend/`). El backend Django **no** va a Vercel. Que el frontend esté en la nube es independiente de dónde corra el backend.
+
 El frontend es una SPA Vite, lista para Vercel (incluye `vercel.json` con el rewrite a `index.html`).
 
 1. Sube el repositorio a GitHub.
 2. En [vercel.com](https://vercel.com) → **Add New Project** → importa el repo.
 3. Configura el proyecto:
-   - **Root Directory:** `frontend`
+   - **Root Directory:** `frontend`  ← imprescindible (si no, Vercel intentaría compilar el Django)
    - **Framework Preset:** Vite (autodetectado)
    - **Build Command:** `npm run build`
    - **Output Directory:** `dist`
-4. En **Environment Variables** agrega:
+4. En **Environment Variables** agrega `VITE_API_BASE_URL` (la URL de tu backend):
+
    ```
-   VITE_API_BASE_URL = https://<tu-backend-publico>
+   VITE_API_BASE_URL = http://127.0.0.1:8000
    ```
-   > Para que los datos carguen en producción, el backend Django debe estar publicado y accesible (p. ej. Render, Railway o Fly.io) y con tu dominio de Vercel añadido a `CORS_ALLOWED_ORIGINS`.
-5. **Deploy.** Vercel entrega una URL pública del tipo `https://sismat-frontend.vercel.app`.
+
+5. **Deploy.** Vercel entrega una URL pública del tipo `https://laboratorio9-daw.vercel.app`.
+
+### ¿Y el backend? — Este proyecto usa la Opción A (backend local)
+
+El frontend en Vercel corre en el navegador de quien lo abre, y desde ahí llama a tu backend. Como el backend corre en **tu máquina** (`http://127.0.0.1:8000`):
+
+- La web desplegada carga datos **solo en una computadora que tenga tu backend corriendo** (la tuya, con `python manage.py runserver` activo).
+- Para la demo con datos reales lo más simple es usar `http://localhost:5173` (todo local). La URL de Vercel queda como el **entregable desplegado** (cumple el requisito de "URL pública activa").
+- Si quieres que la URL de Vercel también cargue datos desde tu máquina, añade tu dominio de Vercel a `CORS_ALLOWED_ORIGINS` en `settings.py`.
+
+> **Alternativa (Opción B, no usada aquí):** si quisieras que la web funcione para *cualquiera* sin tu máquina, tendrías que desplegar también el backend Django en un servicio como Render/Railway y poner esa URL pública en `VITE_API_BASE_URL`.
 
 ---
 
