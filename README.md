@@ -220,11 +220,12 @@ El frontend es una SPA Vite, lista para Vercel (incluye `vercel.json` con el rew
 
 1. Sube el repositorio a GitHub.
 2. En [vercel.com](https://vercel.com) → **Add New Project** → importa el repo.
-3. Configura el proyecto:
-   - **Root Directory:** `frontend`  ← imprescindible (si no, Vercel intentaría compilar el Django)
-   - **Framework Preset:** Vite (autodetectado)
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
+3. Configura el proyecto **en este orden** (¡el orden importa!):
+   - **Root Directory:** clic en **Edit** → elige la carpeta **`frontend`**. ⚠️ Imprescindible.
+     > 📌 Al importar, Vercel mira la **raíz** del repo (que es Django) y por eso puede mostrar el preset **"Django"** y Root Directory en `./`. **Es normal, no te asustes.** Se corrige al poner Root Directory en `frontend`.
+   - **Framework Preset:** después de poner `frontend`, verifica que cambie a **Vite**. Si sigue en **"Django"**, cámbialo a **Vite** manualmente.
+   - **Build Command:** `npm run build` (automático al elegir Vite)
+   - **Output Directory:** `dist` (automático al elegir Vite)
 4. En **Environment Variables** agrega `VITE_API_BASE_URL` (la URL de tu backend):
 
    ```
