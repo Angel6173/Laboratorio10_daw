@@ -11,6 +11,9 @@ EntorninVirtualin/
 db.sqlite3
 db.sqlite3-journal
 
+# Static files recolectados (se generan con collectstatic)
+staticfiles/
+
 .vscode/
 .idea/
 *.suo
@@ -41,6 +44,7 @@ dist/
 # Documentación interna — no forma parte de la entrega
 DOCUMENTACION.md
 DOCUMENTACION_SIMPLE.md
+GUIA_ESTUDIO_FRONTEND.md
 
 # Archivo vacío que dejó 'startapp' (los modelos reales están en sismat/models/)
 enrollments/sismat/models.py
