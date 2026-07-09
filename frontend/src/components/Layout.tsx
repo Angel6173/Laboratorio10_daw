@@ -53,7 +53,6 @@ export function Layout() {
         <header className="topbar">
           <div>
             <h1>Sistema de Matrícula</h1>
-            <p>Escuela Profesional de Ingeniería de Sistemas — UNSA</p>
           </div>
         </header>
 
