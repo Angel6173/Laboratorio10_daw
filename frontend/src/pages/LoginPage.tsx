@@ -31,7 +31,7 @@ export function LoginPage() {
       <form className="login-card" onSubmit={handleSubmit}>
         <div className="login-brand">EPIS · SISMAT</div>
         <h1>Iniciar sesión</h1>
-        <p className="login-sub">Sistema de Matrícula de Laboratorio</p>
+        <p className="login-sub">Sistema de Matrícula</p>
 
         <label>
           Usuario

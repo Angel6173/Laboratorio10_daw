@@ -25,7 +25,6 @@ export function Layout() {
     <div className="admin-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">EPIS</span>
           <span className="brand-text">SISMAT</span>
         </div>
 
@@ -53,7 +52,7 @@ export function Layout() {
       <div className="content-area">
         <header className="topbar">
           <div>
-            <h1>Sistema de Matrícula de Laboratorio</h1>
+            <h1>Sistema de Matrícula</h1>
             <p>Escuela Profesional de Ingeniería de Sistemas — UNSA</p>
           </div>
         </header>
