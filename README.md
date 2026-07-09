@@ -222,7 +222,7 @@ Al hacer `push`, **Render y Vercel redespliegan automáticamente** los cambios.
 
 ---
 
-## 👥 Integrantes
+##  Integrantes
 
 - Santiago Cristopher Gutierrez Ramos
 - Angel Gabriel Hancco Flores
