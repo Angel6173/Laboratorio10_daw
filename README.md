@@ -1,140 +1,82 @@
-# Laboratorio 09 — JWT (Django REST) + Frontend React/Vite desplegado en Vercel
+# Laboratorio 10 — API REST con JWT (Django) + Frontend React/Vite en la nube
 
-> **Curso:** Desarrollo de Aplicaciones Web (DAW) — Semestre III
-> **Escuela:** Ingeniería de Sistemas — UNSA
-> **Tema:** API REST Django protegida con JWT, consumida por un panel web React + Vite (SPA) desplegable en Vercel.
+> **Curso:** Desarrollo de Aplicaciones Web (DAW) — Semestre III · EPIS-UNSA
+> **Tema:** Backend Django REST protegido con **JWT** + panel web **React + Vite**, desplegado en la nube (Render + Vercel + Supabase).
 
-El proyecto integra dos capas, ambas desarrolladas por el equipo:
-
-1. **Backend `enrollments/`** — API REST con Django REST Framework, autenticación **JWT** y CORS.
-2. **Frontend `frontend/`** — panel web **React + Vite + TypeScript** que consume la API, muestra **todos los modelos del sistema** en templates y genera la **constancia de matrícula**. Usa **TanStack Query** y **React Router**, y se despliega en **Vercel**.
-
-> 📌 La carpeta `enrollment-certificate/` es el **proyecto guía del profesor** y **no forma parte de la entrega** (está excluida en `.gitignore`). Todo nuestro frontend vive en `frontend/`.
+Sistema completo de matrícula de laboratorio (**SISMAT**): un backend Django que expone una API REST con autenticación JWT, y un panel web React que consume esa API y muestra todos los modelos del sistema más la constancia de matrícula.
 
 ---
 
-## Tabla de contenidos
+## 🌐 Enlaces en vivo
 
-- [Requisitos previos](#requisitos-previos)
-- [Arquitectura](#arquitectura)
-- [Stack tecnológico](#stack-tecnológico)
-- [Estructura del proyecto](#estructura-del-proyecto)
-- [1. Backend — Django + JWT](#1-backend--django--jwt)
-- [2. Frontend — React + Vite](#2-frontend--react--vite)
-- [Ejecución local (ambos a la vez)](#ejecución-local-ambos-a-la-vez)
-- [Despliegue en Vercel](#despliegue-en-vercel)
-- [Flujo de autenticación JWT](#flujo-de-autenticación-jwt)
-- [Vistas del frontend](#vistas-del-frontend)
-- [Endpoints de la API](#endpoints-de-la-api)
-- [Cumplimiento de la rúbrica 12.2](#cumplimiento-de-la-rúbrica-122)
-- [Integrantes](#integrantes)
+| Qué | URL |
+|---|---|
+| **Web (frontend)** | https://laboratorio10-daw-angel6174.vercel.app |
+| **API (backend)** | https://laboratorio10-daw.onrender.com/api/docs/ |
+| **Repositorio** | https://github.com/Angel6173/Laboratorio10_daw |
+
+**Credenciales de acceso (demo):** usuario `admin` · contraseña `Sismat2026`
 
 ---
 
-## Requisitos previos
+## 🧩 Stack tecnológico
 
-| Herramienta | Versión mínima | Verificar |
-|---|---|---|
-| Python | 3.10+ | `python --version` |
-| pip | 23+ | `pip --version` |
-| Node.js | 20+ (LTS) | `node --version` |
-| npm | 9+ | `npm --version` |
-| Git | cualquier | `git --version` |
-| Cuenta Vercel | — | para el despliegue del frontend |
-
-La base de datos es **Supabase (PostgreSQL)**: no necesitas instalar PostgreSQL localmente, solo las credenciales (ver configuración del `.env`).
+| Capa | Tecnología |
+|---|---|
+| Backend | Django + Django REST Framework |
+| Autenticación | djangorestframework-simplejwt (JWT) |
+| CORS | django-cors-headers |
+| Base de datos | PostgreSQL (Supabase) |
+| Frontend | React + Vite + TypeScript |
+| Datos remotos | TanStack Query |
+| Rutas | React Router |
+| Despliegue backend | Render (gunicorn + whitenoise) |
+| Despliegue frontend | Vercel |
 
 ---
 
-## Arquitectura
+## 📁 Estructura del proyecto
 
 ```
-        [ Frontend React + Vite ]                 [ Backend Django + JWT ]
-            panel SISMAT                                API REST
-         localhost:5173 / Vercel                     localhost:8000
-                 │                                          │
-                 │  POST /api/token/  (usuario + password)  │
-                 │ ───────────────────────────────────────► │
-                 │ ◄──────────  { access, refresh }  ─────── │
-                 │                                          │
-                 │  GET /api/students/  (y demás modelos)   │
-                 │  Authorization: Bearer <access>          │
-                 │ ───────────────────────────────────────► │
-                 │ ◄────────────  JSON (datos)  ──────────── │
-                 │                                          │
-                 │  GET /api/enrollment-certificate/?student_id=<uuid>
-                 │ ───────────────────────────────────────► │
-                 │ ◄──────────  JSON constancia  ─────────── │
-```
-
----
-
-## Stack tecnológico
-
-| Capa | Tecnología | Versión |
-|---|---|---|
-| Backend | Django + DRF | 6.0.6 / 3.17.1 |
-| Auth | djangorestframework-simplejwt | 5.4.0 |
-| CORS | django-cors-headers | 4.7.0 |
-| Config | python-dotenv | 1.0.1 |
-| Base de datos | PostgreSQL (Supabase) | 16 |
-| Frontend | React + Vite + TypeScript | 19 / 6 |
-| Datos remotos | TanStack Query | 5.x |
-| Rutas | React Router DOM | 6.x |
-| Despliegue | Vercel | — |
-
----
-
-## Estructura del proyecto
-
-```
-Laboratorio9_daw/
-├── requirements.txt
-├── README.md
-├── .gitignore                    (excluye informe/, enrollment-certificate/, .env, node_modules)
-│
-├── enrollments/                  ← BACKEND (mi proyecto Django)
+Laboratorio10_daw/
+├── requirements.txt          → dependencias del backend
+├── render.yaml               → configuración de despliegue (Render)
+├── enrollments/              → BACKEND (Django)
 │   ├── manage.py
-│   ├── .env.example              (plantilla de credenciales)
-│   ├── enrollments/
-│   │   ├── settings.py           (JWT + CORS + IsAuthenticated, lee de .env)
-│   │   └── urls.py               (/api/token/ + /api/token/refresh/)
-│   └── sismat/
-│       ├── models/               (Users, Teachers, Students, Courses, CoursesStudents)
-│       ├── serializers/
-│       ├── views.py              (ViewSets + EnrollmentCertificateView)
-│       └── urls.py
-│
-├── frontend/                     ← FRONTEND (mi panel React + Vite)
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── vercel.json               (rewrites SPA para Vercel)
-│   ├── .env.example              (VITE_API_BASE_URL)
-│   └── src/
-│       ├── api/        authApi.ts · client.ts · sismatApi.ts
-│       ├── context/    AuthContext.tsx
-│       ├── hooks/      useResources.ts · useEnrollmentCertificate.ts
-│       ├── components/ Layout · ProtectedRoute · DataTable · ResourceView
-│       │               SectionHeader · StatusBadge · CertificateView
-│       │               CoursesTable · StudentInfo
-│       └── pages/      LoginPage · DashboardPage · UsersPage · TeachersPage
-│                       StudentsPage · CoursesPage · EnrollmentsPage
-│                       CertificateSearchPage · CertificatePage
-│
-└── enrollment-certificate/       ← GUÍA del profesor (NO se entrega, gitignored)
+│   ├── .env.example          → plantilla de credenciales
+│   ├── enrollments/          → settings.py (JWT, CORS), urls.py, wsgi.py
+│   └── sismat/               → models/, serializers/, views.py, urls.py
+└── frontend/                 → FRONTEND (React + Vite)
+    ├── package.json
+    ├── vercel.json
+    ├── .env.example          → VITE_API_BASE_URL
+    └── src/                  → api/, context/, hooks/, components/, pages/
 ```
 
 ---
 
-## 1. Backend — Django + JWT
+## ✅ Requisitos previos
 
-### Instalación
+| Herramienta | Versión |
+|---|---|
+| Python | 3.12+ |
+| Node.js | 20+ (LTS) |
+| Git | cualquiera |
+| Cuenta Supabase | para la base de datos |
+| Cuenta Render + Vercel | para el despliegue |
 
+---
+
+# PARTE 1 — Ejecutar en local (paso a paso)
+
+### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/Angel6173/Laboratorio9_daw.git
-cd Laboratorio9_daw
+git clone https://github.com/Angel6173/Laboratorio10_daw.git
+cd Laboratorio10_daw
+```
 
-# Entorno virtual
+### 2. Backend — entorno virtual e instalación
+```bash
 python -m venv venv
 venv\Scripts\Activate.ps1        # Windows
 # source venv/bin/activate       # Linux / macOS
@@ -142,38 +84,30 @@ venv\Scripts\Activate.ps1        # Windows
 pip install -r requirements.txt
 ```
 
-### Variables de entorno
-
+### 3. Backend — variables de entorno
 ```bash
 cp enrollments/.env.example enrollments/.env
 ```
-
-Edita `enrollments/.env`:
-
+Edita `enrollments/.env` con los datos de tu Supabase:
 ```env
-SECRET_KEY=coloca-aqui-tu-secret-key
+SECRET_KEY=una-clave-larga-y-secreta
 DB_NAME=postgres
 DB_USER=postgres
 DB_PASSWORD=tu_password_de_supabase
-DB_HOST=db.xxxxxxxxxxxxxxxx.supabase.co
+DB_HOST=db.xxxxxxxxxxxx.supabase.co
 DB_PORT=5432
 ```
 
-> `.env` está en `.gitignore` — nunca se sube al repositorio.
-
-### Migraciones, superusuario y arranque
-
+### 4. Backend — migraciones, superusuario y arranque
 ```bash
 cd enrollments
 python manage.py migrate
-python manage.py createsuperuser     # con este usuario inicias sesión en el frontend
+python manage.py createsuperuser     # con este usuario harás login
 python manage.py runserver           # http://127.0.0.1:8000
 ```
 
----
-
-## 2. Frontend — React + Vite
-
+### 5. Frontend — instalación y arranque
+En **otra terminal**:
 ```bash
 cd frontend
 npm install
@@ -182,159 +116,118 @@ cp .env.example .env                 # ya apunta a http://127.0.0.1:8000
 npm run dev                          # http://localhost:5173
 ```
 
-Scripts disponibles:
-
-| Comando | Acción |
-|---|---|
-| `npm run dev` | Servidor de desarrollo (Vite) |
-| `npm run build` | Compila TypeScript y genera `dist/` |
-| `npm run preview` | Sirve el build de producción localmente |
+### 6. Probar
+Abre `http://localhost:5173`, inicia sesión con tu superusuario y navega el panel. ✅
 
 ---
 
-## Ejecución local (ambos a la vez)
+# PARTE 2 — Desplegar en la nube (paso a paso)
 
-Abre **dos terminales**:
+El objetivo: **backend en Render + frontend en Vercel + base de datos en Supabase**, para que funcione sin depender de tu máquina.
 
-**Terminal 1 — Backend**
-```bash
-cd enrollments
-python manage.py runserver
+## A) Base de datos — Supabase (Session Pooler)
+
+Render solo se conecta por IPv4, así que se usa el **Session Pooler** de Supabase (no el host directo, que es IPv6).
+
+### Cómo encontrar los datos del Session Pooler (paso a paso)
+
+1. Entra al dashboard de tu proyecto en Supabase.
+2. Arriba, junto al nombre del proyecto, haz clic en el botón **Connect** (ícono de enchufe 🔌).
+3. Se abre la ventana **"Connect to your project"**.
+4. Busca la sección **"Connection String"**. Por defecto muestra un **desplegable** que dice **"Direct connection"**.
+5. **Haz clic en ese desplegable** y cámbialo a **"Session pooler"**. *(Este es el truco: por defecto sale "Direct connection"; hay que cambiarlo para ver el pooler.)*
+6. Copia los datos que aparecen. Reconoces que es el pooler porque:
+   - **Host:** contiene `pooler.supabase.com` → `aws-1-<region>.pooler.supabase.com`
+   - **User:** lleva el ID del proyecto → `postgres.<project-ref>`
+   - **Port:** `5432`
+
+La cadena completa se ve así (de ahí sacas cada valor):
+```
+postgresql://postgres.<project-ref>:[PASSWORD]@aws-1-<region>.pooler.supabase.com:5432/postgres
 ```
 
-**Terminal 2 — Frontend**
-```bash
-cd frontend
-npm run dev
-```
+## B) Backend — Render
 
-Abre `http://localhost:5173`, inicia sesión con tu superusuario y navega el panel.
-
----
-
-## Despliegue en Vercel
-
-> ⚠️ **En Vercel se despliega SOLO el frontend** (`frontend/`). El backend Django **no** va a Vercel. Que el frontend esté en la nube es independiente de dónde corra el backend.
-
-El frontend es una SPA Vite, lista para Vercel (incluye `vercel.json` con el rewrite a `index.html`).
-
-1. Sube el repositorio a GitHub.
-2. En [vercel.com](https://vercel.com) → **Add New Project** → importa el repo.
-3. Configura el proyecto **en este orden** (¡el orden importa!):
-   - **Root Directory:** clic en **Edit** → elige la carpeta **`frontend`**. ⚠️ Imprescindible.
-     > 📌 Al importar, Vercel mira la **raíz** del repo (que es Django) y por eso puede mostrar el preset **"Django"** y Root Directory en `./`. **Es normal, no te asustes.** Se corrige al poner Root Directory en `frontend`.
-   - **Framework Preset:** después de poner `frontend`, verifica que cambie a **Vite**. Si sigue en **"Django"**, cámbialo a **Vite** manualmente.
-   - **Build Command:** `npm run build` (automático al elegir Vite)
-   - **Output Directory:** `dist` (automático al elegir Vite)
-4. En **Environment Variables** agrega `VITE_API_BASE_URL` (la URL de tu backend):
-
+1. Sube el proyecto a GitHub (ver PARTE 3).
+2. En [render.com](https://render.com) → **New + → Web Service** → conecta tu repo.
+3. Configura:
+   - **Root Directory:** *(vacío)*
+   - **Instance Type:** Free
+   - **Build Command:**
+     ```
+     pip install -r requirements.txt && python enrollments/manage.py collectstatic --noinput && python enrollments/manage.py migrate
+     ```
+   - **Start Command:**
+     ```
+     gunicorn --chdir enrollments enrollments.wsgi:application --bind 0.0.0.0:$PORT
+     ```
+4. **Environment Variables:**
    ```
-   VITE_API_BASE_URL = http://127.0.0.1:8000
+   PYTHON_VERSION        = 3.12.5
+   DEBUG                 = False
+   SECRET_KEY            = (una clave larga)
+   ALLOWED_HOSTS         = .onrender.com
+   CSRF_TRUSTED_ORIGINS  = https://*.onrender.com
+   DB_NAME               = postgres
+   DB_USER               = postgres.<project-ref>          (del pooler)
+   DB_PASSWORD           = tu_password_de_supabase
+   DB_HOST               = aws-1-<region>.pooler.supabase.com
+   DB_PORT               = 5432
    ```
+5. **Deploy.** Cuando diga "Live", prueba `https://tu-backend.onrender.com/api/docs/` (Swagger).
 
-5. **Deploy.** Vercel entrega una URL pública del tipo `https://laboratorio9-daw.vercel.app`.
+## C) Frontend — Vercel
 
-### ¿Y el backend? — Este proyecto usa la Opción A (backend local)
+1. En [vercel.com](https://vercel.com) → **Add New → Project** → importa el mismo repo.
+2. Configura:
+   - **Root Directory:** `frontend`
+   - **Framework Preset:** Vite
+   - **Environment Variable:** `VITE_API_BASE_URL = https://tu-backend.onrender.com`
+3. **Deploy.** Tu web quedará en `https://tu-proyecto.vercel.app`.
 
-El frontend en Vercel corre en el navegador de quien lo abre, y desde ahí llama a tu backend. Como el backend corre en **tu máquina** (`http://127.0.0.1:8000`):
+> El backend ya permite cualquier origen `*.vercel.app` en su CORS, así que la web conecta sin ajustes extra.
 
-- La web desplegada carga datos **solo en una computadora que tenga tu backend corriendo** (la tuya, con `python manage.py runserver` activo).
-- Para la demo con datos reales lo más simple es usar `http://localhost:5173` (todo local). La URL de Vercel queda como el **entregable desplegado** (cumple el requisito de "URL pública activa").
-- Si quieres que la URL de Vercel también cargue datos desde tu máquina, añade tu dominio de Vercel a `CORS_ALLOWED_ORIGINS` en `settings.py`.
-
-> **Alternativa (Opción B, no usada aquí):** si quisieras que la web funcione para *cualquiera* sin tu máquina, tendrías que desplegar también el backend Django en un servicio como Render/Railway y poner esa URL pública en `VITE_API_BASE_URL`.
+## D) Probar en línea
+Abre tu URL de Vercel + `/login`, entra con `admin` / `Sismat2026`.
+> ⏱️ La primera carga tarda ~40 seg (el backend gratis de Render "despierta").
 
 ---
 
-## Flujo de autenticación JWT
+# PARTE 3 — Subir el proyecto a GitHub
 
+```bash
+git add .
+git commit -m "Subiendo proyecto laboratorio 10"
+git push
 ```
-1. Visitas el panel → ProtectedRoute ve que no hay token → redirige a /login.
-2. LoginPage envía POST /api/token/ con usuario y contraseña.
-3. Django responde { access, refresh } → se guardan en localStorage (AuthContext).
-4. Cada petición (apiFetch) añade el header Authorization: Bearer <access>.
-5. Si el access expira (401), el cliente intenta /api/token/refresh/ una vez.
-6. Si el refresh falla → limpia tokens y redirige a /login.
-7. "Cerrar sesión" borra los tokens y vuelve a /login.
-```
+Al hacer `push`, **Render y Vercel redespliegan automáticamente** los cambios.
 
 ---
 
-## Vistas del frontend
-
-| Ruta | Vista | Descripción |
-|---|---|---|
-| `/login` | Login | Autenticación JWT |
-| `/` | Dashboard | Tarjetas con el total de cada modelo |
-| `/usuarios` | Usuarios | Tabla de cuentas (email, rol, estado) |
-| `/docentes` | Docentes | Tabla de docentes (especialidad, teléfono…) |
-| `/estudiantes` | Estudiantes | Tabla de estudiantes + enlace a su constancia |
-| `/cursos` | Cursos | Tabla de cursos (créditos, descripción) |
-| `/matriculas` | Matrículas | Tabla de la relación curso–estudiante |
-| `/constancia` | Buscar constancia | Formulario por ID de estudiante |
-| `/constancia/:studentId` | Constancia | Constancia de matrícula institucional |
-
----
-
-## Endpoints de la API
-
-### Autenticación (público)
+## 🔌 Endpoints de la API
 
 | Método | URL | Descripción |
 |---|---|---|
-| POST | `/api/token/` | Obtener access + refresh |
-| POST | `/api/token/refresh/` | Renovar access |
-
-### Recursos (requieren `Authorization: Bearer <token>`)
-
-| Método | URL | Descripción |
-|---|---|---|
-| GET/POST | `/api/users/` | Usuarios |
-| GET/POST | `/api/teachers/` | Docentes |
-| GET/POST | `/api/students/` | Estudiantes |
-| GET/POST | `/api/courses/` | Cursos |
-| GET/POST | `/api/courses-students/` | Matrículas |
+| POST | `/api/token/` | Obtener access + refresh (login) |
+| POST | `/api/token/refresh/` | Renovar el access token |
+| GET | `/api/users/` | Usuarios |
+| GET | `/api/teachers/` | Docentes |
+| GET | `/api/students/` | Estudiantes |
+| GET | `/api/courses/` | Cursos |
+| GET | `/api/courses-students/` | Matrículas |
 | GET | `/api/enrollment-certificate/?student_id=<uuid>` | Constancia de matrícula |
-| GET | `/api/docs/` | Swagger UI |
+| GET | `/api/docs/` | Swagger (documentación interactiva) |
 
-Ejemplo:
-
-```bash
-# Token
-curl -X POST http://127.0.0.1:8000/api/token/ \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "tu_password"}'
-
-# Constancia con token
-curl "http://127.0.0.1:8000/api/enrollment-certificate/?student_id=<uuid>" \
-  -H "Authorization: Bearer <access_token>"
-```
+> Todos los endpoints (menos los de token) requieren la cabecera `Authorization: Bearer <access>`.
 
 ---
 
-## Cumplimiento de la rúbrica 12.2
+## 👥 Integrantes
 
-| # | Criterio | Cómo se cumple |
-|---|---|---|
-| 1 | Proyecto Vite | `frontend/` creado con React + Vite + TypeScript; `npm run dev`/`build` funcionan |
-| 2 | Componentes | `Layout`, `DataTable`, `ResourceView`, `CertificateView`, `StudentInfo`, `CoursesTable`, `StatusBadge`, `SectionHeader` |
-| 3 | TanStack Query | Hooks `useResources` y `useEnrollmentCertificate` con `useQuery`, `staleTime` y manejo de estados |
-| 4 | Rutas | React Router con rutas protegidas y `/constancia/:studentId` |
-| 5 | Diseño | Tarjeta institucional, barra azul de sección y tablas con bordes (estilo de la guía) |
-| 6 | Despliegue | `vercel.json` + instrucciones de Vercel |
-| 7 | Commits | Historial Git descriptivo |
-| 8 | Informe | `informe/DAW_lab09_jwt.tex` con marco teórico, código y capturas |
+- Santiago Cristopher Gutierrez Ramos
+- Angel Gabriel Hancco Flores
+- Matias Hernan Chamana Gonzales
 
 ---
 
-## Integrantes
-
-| Nombre |
-|---|
-| Santiago Cristopher Gutierrez Ramos |
-| Angel Gabriel Hancco Flores |
-| Matias Hernan Chamana Gonzales |
-
----
-
-Proyecto académico — Escuela Profesional de Ingeniería de Sistemas, UNSA, semestre 2026-A.
+Proyecto académico — Escuela Profesional de Ingeniería de Sistemas, UNSA · 2026-A.
