@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom'
 import type { Column } from '../components/DataTable'
 import { ResourceView } from '../components/ResourceView'
 import { StatusBadge } from '../components/StatusBadge'
+import { SearchBar } from '../components/SearchBar'
 import {
   CreateResourceModal,
   type FormFieldDef,
 } from '../components/CreateResourceModal'
-import { useStudents } from '../hooks/useResources'
+import { useStudents, useUsers } from '../hooks/useResources'
+import { useDebounce } from '../hooks/useDebounce'
 import { useCreateStudent } from '../hooks/useMutations'
 import type { Student } from '../types/models'
 
@@ -42,26 +44,37 @@ const columns: Column<Student>[] = [
   },
 ]
 
-const fields: FormFieldDef[] = [
-  { name: 'names', label: 'Nombres', required: true },
-  { name: 'fatherSurname', label: 'Apellido paterno', required: true },
-  { name: 'motherSurname', label: 'Apellido materno', required: true },
-  {
-    name: 'gender',
-    label: 'Género',
-    type: 'select',
-    options: [
-      { value: 'Masculino', label: 'Masculino' },
-      { value: 'Femenino', label: 'Femenino' },
-    ],
-  },
-  { name: 'phone', label: 'Teléfono', placeholder: 'mínimo 9 dígitos' },
-  { name: 'address', label: 'Dirección' },
-]
-
 export function StudentsPage() {
+  const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const create = useCreateStudent()
+  const users = useUsers()
+  const query = useStudents(useDebounce(search))
+
+  const fields: FormFieldDef[] = [
+    { name: 'names', label: 'Nombres', required: true },
+    { name: 'fatherSurname', label: 'Apellido paterno', required: true },
+    { name: 'motherSurname', label: 'Apellido materno', required: true },
+    {
+      name: 'gender',
+      label: 'Género',
+      type: 'select',
+      options: [
+        { value: 'Masculino', label: 'Masculino' },
+        { value: 'Femenino', label: 'Femenino' },
+      ],
+    },
+    { name: 'phone', label: 'Teléfono', placeholder: 'mínimo 9 dígitos' },
+    { name: 'address', label: 'Dirección' },
+    {
+      name: 'user_id',
+      label: 'Usuario (cuenta)',
+      type: 'select',
+      options: (users.data ?? [])
+        .filter((user) => user.role === 'student')
+        .map((user) => ({ value: user.id, label: user.email })),
+    },
+  ]
 
   function handleClose() {
     setOpen(false)
@@ -75,13 +88,18 @@ export function StudentsPage() {
   return (
     <>
       <div className="page-toolbar">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por nombre o apellido…"
+        />
         <button className="btn-primary" onClick={() => setOpen(true)}>
           + Nuevo estudiante
         </button>
       </div>
       <ResourceView
         title="ESTUDIANTES"
-        query={useStudents()}
+        query={query}
         columns={columns}
         rowKey={(student) => student.id}
       />

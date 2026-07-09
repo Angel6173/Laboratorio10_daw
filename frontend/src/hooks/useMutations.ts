@@ -4,7 +4,16 @@ import {
   createEnrollment,
   createStudent,
   createTeacher,
+  createUser,
 } from '../api/sismatApi'
+
+export function useCreateUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: createUser,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+  })
+}
 
 export function useCreateStudent() {
   const queryClient = useQueryClient()

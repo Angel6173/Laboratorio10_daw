@@ -2,11 +2,13 @@ import { useState } from 'react'
 import type { Column } from '../components/DataTable'
 import { ResourceView } from '../components/ResourceView'
 import { StatusBadge } from '../components/StatusBadge'
+import { SearchBar } from '../components/SearchBar'
 import {
   CreateResourceModal,
   type FormFieldDef,
 } from '../components/CreateResourceModal'
-import { useTeachers } from '../hooks/useResources'
+import { useTeachers, useUsers } from '../hooks/useResources'
+import { useDebounce } from '../hooks/useDebounce'
 import { useCreateTeacher } from '../hooks/useMutations'
 import type { Teacher } from '../types/models'
 
@@ -32,26 +34,37 @@ const columns: Column<Teacher>[] = [
   },
 ]
 
-const fields: FormFieldDef[] = [
-  { name: 'names', label: 'Nombres', required: true },
-  { name: 'fatherSurname', label: 'Apellido paterno', required: true },
-  { name: 'motherSurname', label: 'Apellido materno', required: true },
-  { name: 'specialty', label: 'Especialidad' },
-  { name: 'phone', label: 'Teléfono', placeholder: '+51 999888777' },
-  {
-    name: 'gender',
-    label: 'Género',
-    type: 'select',
-    options: [
-      { value: 'Masculino', label: 'Masculino' },
-      { value: 'Femenino', label: 'Femenino' },
-    ],
-  },
-]
-
 export function TeachersPage() {
+  const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const create = useCreateTeacher()
+  const users = useUsers()
+  const query = useTeachers(useDebounce(search))
+
+  const fields: FormFieldDef[] = [
+    { name: 'names', label: 'Nombres', required: true },
+    { name: 'fatherSurname', label: 'Apellido paterno', required: true },
+    { name: 'motherSurname', label: 'Apellido materno', required: true },
+    { name: 'specialty', label: 'Especialidad' },
+    { name: 'phone', label: 'Teléfono', placeholder: '+51 999888777' },
+    {
+      name: 'gender',
+      label: 'Género',
+      type: 'select',
+      options: [
+        { value: 'Masculino', label: 'Masculino' },
+        { value: 'Femenino', label: 'Femenino' },
+      ],
+    },
+    {
+      name: 'user_id',
+      label: 'Usuario (cuenta)',
+      type: 'select',
+      options: (users.data ?? [])
+        .filter((user) => user.role === 'teacher')
+        .map((user) => ({ value: user.id, label: user.email })),
+    },
+  ]
 
   function handleClose() {
     setOpen(false)
@@ -65,13 +78,18 @@ export function TeachersPage() {
   return (
     <>
       <div className="page-toolbar">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por nombre o especialidad…"
+        />
         <button className="btn-primary" onClick={() => setOpen(true)}>
           + Nuevo docente
         </button>
       </div>
       <ResourceView
         title="DOCENTES"
-        query={useTeachers()}
+        query={query}
         columns={columns}
         rowKey={(teacher) => teacher.id}
       />

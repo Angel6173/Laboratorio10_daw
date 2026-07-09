@@ -2,11 +2,13 @@ import { useState } from 'react'
 import type { Column } from '../components/DataTable'
 import { ResourceView } from '../components/ResourceView'
 import { StatusBadge } from '../components/StatusBadge'
+import { SearchBar } from '../components/SearchBar'
 import {
   CreateResourceModal,
   type FormFieldDef,
 } from '../components/CreateResourceModal'
 import { useCourses, useEnrollments, useStudents } from '../hooks/useResources'
+import { useDebounce } from '../hooks/useDebounce'
 import { useCreateEnrollment } from '../hooks/useMutations'
 import type { CourseStudent } from '../types/models'
 
@@ -37,10 +39,12 @@ const columns: Column<CourseStudent>[] = [
 ]
 
 export function EnrollmentsPage() {
+  const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const create = useCreateEnrollment()
   const students = useStudents()
   const courses = useCourses()
+  const query = useEnrollments(useDebounce(search))
 
   const fields: FormFieldDef[] = [
     {
@@ -77,13 +81,18 @@ export function EnrollmentsPage() {
   return (
     <>
       <div className="page-toolbar">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por estudiante o curso…"
+        />
         <button className="btn-primary" onClick={() => setOpen(true)}>
           + Nueva matrícula
         </button>
       </div>
       <ResourceView
         title="MATRÍCULAS"
-        query={useEnrollments()}
+        query={query}
         columns={columns}
         rowKey={(enrollment) => enrollment.id}
       />

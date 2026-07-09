@@ -7,17 +7,20 @@ import {
   getUsers,
 } from '../api/sismatApi'
 
-export const useUsers = () =>
-  useQuery({ queryKey: ['users'], queryFn: getUsers })
+export const useUsers = (search = '') =>
+  useQuery({ queryKey: ['users', search], queryFn: () => getUsers(search) })
 
-export const useTeachers = () =>
-  useQuery({ queryKey: ['teachers'], queryFn: getTeachers })
+export const useTeachers = (search = '') =>
+  useQuery({ queryKey: ['teachers', search], queryFn: () => getTeachers(search) })
 
-export const useStudents = () =>
-  useQuery({ queryKey: ['students'], queryFn: getStudents })
+export const useStudents = (search = '') =>
+  useQuery({ queryKey: ['students', search], queryFn: () => getStudents(search) })
 
-export const useCourses = () =>
-  useQuery({ queryKey: ['courses'], queryFn: getCourses })
+export const useCourses = (search = '') =>
+  useQuery({ queryKey: ['courses', search], queryFn: () => getCourses(search) })
 
-export const useEnrollments = () =>
-  useQuery({ queryKey: ['enrollments'], queryFn: getEnrollments })
+export const useEnrollments = (search = '') =>
+  useQuery({
+    queryKey: ['enrollments', search],
+    queryFn: () => getEnrollments(search),
+  })

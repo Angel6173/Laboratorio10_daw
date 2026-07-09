@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 export interface FormFieldDef {
   name: string
   label: string
-  type?: 'text' | 'number' | 'select'
+  type?: 'text' | 'number' | 'select' | 'password' | 'email'
   required?: boolean
   placeholder?: string
   options?: { value: string; label: string }[]

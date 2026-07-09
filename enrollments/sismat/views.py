@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -20,10 +20,14 @@ from .serializers import (
 class UserViewSet(viewsets.ModelViewSet):
     queryset = Users.objects.all()
     serializer_class = UserSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['email', 'role']
 
 
 class TeacherViewSet(viewsets.ModelViewSet):
     queryset = Teachers.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['names', 'fatherSurname', 'motherSurname', 'specialty']
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -38,6 +42,8 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Students.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['names', 'fatherSurname', 'motherSurname']
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -54,6 +60,8 @@ class StudentViewSet(viewsets.ModelViewSet):
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Courses.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['courseName', 'description']
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -70,6 +78,13 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 class CoursesStudentsViewSet(viewsets.ModelViewSet):
     queryset = CoursesStudents.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        'student__names',
+        'student__fatherSurname',
+        'student__motherSurname',
+        'course__courseName',
+    ]
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
