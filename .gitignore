@@ -46,6 +46,9 @@ DOCUMENTACION.md
 DOCUMENTACION_SIMPLE.md
 GUIA_ESTUDIO_FRONTEND.md
 
+# Script de datos de prueba (semilla) — se corre una vez en Supabase
+datos_supabase.sql
+
 # Archivo vacío que dejó 'startapp' (los modelos reales están en sismat/models/)
 enrollments/sismat/models.py
 

@@ -34,6 +34,24 @@ export const createStudent = (data: Payload) => post<Student>('/api/students/', 
 export const createCourse = (data: Payload) => post<Course>('/api/courses/', data)
 export const createEnrollment = (data: Payload) => post<CourseStudent>('/api/courses-students/', data)
 
+const patch = <T>(path: string, id: string, data: Payload) =>
+  apiFetch<T>(`${path}${id}/`, { method: 'PATCH', body: JSON.stringify(data) })
+
+const remove = (path: string, id: string) =>
+  apiFetch<void>(`${path}${id}/`, { method: 'DELETE' })
+
+export const updateUser = (id: string, data: Payload) => patch<User>('/api/users/', id, data)
+export const updateTeacher = (id: string, data: Payload) => patch<Teacher>('/api/teachers/', id, data)
+export const updateStudent = (id: string, data: Payload) => patch<Student>('/api/students/', id, data)
+export const updateCourse = (id: string, data: Payload) => patch<Course>('/api/courses/', id, data)
+export const updateEnrollment = (id: string, data: Payload) => patch<CourseStudent>('/api/courses-students/', id, data)
+
+export const deleteUser = (id: string) => remove('/api/users/', id)
+export const deleteTeacher = (id: string) => remove('/api/teachers/', id)
+export const deleteStudent = (id: string) => remove('/api/students/', id)
+export const deleteCourse = (id: string) => remove('/api/courses/', id)
+export const deleteEnrollment = (id: string) => remove('/api/courses-students/', id)
+
 export function getEnrollmentCertificate(studentId: string) {
   const query = encodeURIComponent(studentId)
   return apiFetch<EnrollmentCertificateResponse>(

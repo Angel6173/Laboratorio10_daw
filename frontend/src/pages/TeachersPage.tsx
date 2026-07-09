@@ -3,16 +3,21 @@ import type { Column } from '../components/DataTable'
 import { ResourceView } from '../components/ResourceView'
 import { StatusBadge } from '../components/StatusBadge'
 import { SearchBar } from '../components/SearchBar'
+import { RowActions } from '../components/RowActions'
 import {
   CreateResourceModal,
   type FormFieldDef,
 } from '../components/CreateResourceModal'
 import { useTeachers, useUsers } from '../hooks/useResources'
 import { useDebounce } from '../hooks/useDebounce'
-import { useCreateTeacher } from '../hooks/useMutations'
+import {
+  useCreateTeacher,
+  useDeleteTeacher,
+  useUpdateTeacher,
+} from '../hooks/useMutations'
 import type { Teacher } from '../types/models'
 
-const columns: Column<Teacher>[] = [
+const baseColumns: Column<Teacher>[] = [
   {
     key: 'fullname',
     header: 'Apellidos y nombres',
@@ -26,7 +31,6 @@ const columns: Column<Teacher>[] = [
     render: (teacher) => teacher.specialty ?? '—',
   },
   { key: 'phone', header: 'Teléfono', render: (teacher) => teacher.phone ?? '—' },
-  { key: 'gender', header: 'Género', render: (teacher) => teacher.gender ?? '—' },
   {
     key: 'status',
     header: 'Estado',
@@ -34,10 +38,25 @@ const columns: Column<Teacher>[] = [
   },
 ]
 
+function toValues(teacher: Teacher): Record<string, string> {
+  return {
+    names: teacher.names,
+    fatherSurname: teacher.fatherSurname,
+    motherSurname: teacher.motherSurname,
+    specialty: teacher.specialty ?? '',
+    phone: teacher.phone ?? '',
+    gender: teacher.gender ?? '',
+    user_id: teacher.user_id ?? '',
+  }
+}
+
 export function TeachersPage() {
   const [search, setSearch] = useState('')
-  const [open, setOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editing, setEditing] = useState<Teacher | null>(null)
   const create = useCreateTeacher()
+  const update = useUpdateTeacher()
+  const remove = useDeleteTeacher()
   const users = useUsers()
   const query = useTeachers(useDebounce(search))
 
@@ -66,13 +85,31 @@ export function TeachersPage() {
     },
   ]
 
-  function handleClose() {
-    setOpen(false)
-    create.reset()
-  }
+  const columns: Column<Teacher>[] = [
+    ...baseColumns,
+    {
+      key: 'actions',
+      header: 'Acciones',
+      render: (teacher) => (
+        <RowActions
+          onEdit={() => {
+            update.reset()
+            setEditing(teacher)
+          }}
+          onDelete={() => handleDelete(teacher)}
+        />
+      ),
+    },
+  ]
 
-  function handleSubmit(data: Record<string, string>) {
-    create.mutate(data, { onSuccess: handleClose })
+  function handleDelete(teacher: Teacher) {
+    if (
+      window.confirm(
+        `¿Eliminar al docente ${teacher.fatherSurname} ${teacher.motherSurname}, ${teacher.names}?`,
+      )
+    ) {
+      remove.mutate(teacher.id)
+    }
   }
 
   return (
@@ -83,7 +120,13 @@ export function TeachersPage() {
           onChange={setSearch}
           placeholder="Buscar por nombre o especialidad…"
         />
-        <button className="btn-primary" onClick={() => setOpen(true)}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            create.reset()
+            setCreateOpen(true)
+          }}
+        >
           + Nuevo docente
         </button>
       </div>
@@ -93,14 +136,33 @@ export function TeachersPage() {
         columns={columns}
         rowKey={(teacher) => teacher.id}
       />
-      {open && (
+      {createOpen && (
         <CreateResourceModal
           title="Nuevo docente"
           fields={fields}
           isPending={create.isPending}
           error={create.error}
-          onClose={handleClose}
-          onSubmit={handleSubmit}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(data) =>
+            create.mutate(data, { onSuccess: () => setCreateOpen(false) })
+          }
+        />
+      )}
+      {editing && (
+        <CreateResourceModal
+          key={editing.id}
+          title="Editar docente"
+          fields={fields}
+          initialValues={toValues(editing)}
+          isPending={update.isPending}
+          error={update.error}
+          onClose={() => setEditing(null)}
+          onSubmit={(data) =>
+            update.mutate(
+              { id: editing.id, data },
+              { onSuccess: () => setEditing(null) },
+            )
+          }
         />
       )}
     </>

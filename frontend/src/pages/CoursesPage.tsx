@@ -3,16 +3,21 @@ import type { Column } from '../components/DataTable'
 import { ResourceView } from '../components/ResourceView'
 import { StatusBadge } from '../components/StatusBadge'
 import { SearchBar } from '../components/SearchBar'
+import { RowActions } from '../components/RowActions'
 import {
   CreateResourceModal,
   type FormFieldDef,
 } from '../components/CreateResourceModal'
 import { useCourses, useTeachers } from '../hooks/useResources'
 import { useDebounce } from '../hooks/useDebounce'
-import { useCreateCourse } from '../hooks/useMutations'
+import {
+  useCreateCourse,
+  useDeleteCourse,
+  useUpdateCourse,
+} from '../hooks/useMutations'
 import type { Course } from '../types/models'
 
-const columns: Column<Course>[] = [
+const baseColumns: Column<Course>[] = [
   { key: 'courseName', header: 'Curso', className: 'cell-strong' },
   { key: 'credits', header: 'Créditos' },
   {
@@ -27,10 +32,22 @@ const columns: Column<Course>[] = [
   },
 ]
 
+function toValues(course: Course): Record<string, string> {
+  return {
+    courseName: course.courseName,
+    credits: String(course.credits),
+    description: course.description ?? '',
+    teacher_id: course.teacher_id ?? '',
+  }
+}
+
 export function CoursesPage() {
   const [search, setSearch] = useState('')
-  const [open, setOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editing, setEditing] = useState<Course | null>(null)
   const create = useCreateCourse()
+  const update = useUpdateCourse()
+  const remove = useDeleteCourse()
   const teachers = useTeachers()
   const query = useCourses(useDebounce(search))
 
@@ -49,13 +66,27 @@ export function CoursesPage() {
     },
   ]
 
-  function handleClose() {
-    setOpen(false)
-    create.reset()
-  }
+  const columns: Column<Course>[] = [
+    ...baseColumns,
+    {
+      key: 'actions',
+      header: 'Acciones',
+      render: (course) => (
+        <RowActions
+          onEdit={() => {
+            update.reset()
+            setEditing(course)
+          }}
+          onDelete={() => handleDelete(course)}
+        />
+      ),
+    },
+  ]
 
-  function handleSubmit(data: Record<string, string>) {
-    create.mutate(data, { onSuccess: handleClose })
+  function handleDelete(course: Course) {
+    if (window.confirm(`¿Eliminar el curso "${course.courseName}"?`)) {
+      remove.mutate(course.id)
+    }
   }
 
   return (
@@ -66,7 +97,13 @@ export function CoursesPage() {
           onChange={setSearch}
           placeholder="Buscar curso…"
         />
-        <button className="btn-primary" onClick={() => setOpen(true)}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            create.reset()
+            setCreateOpen(true)
+          }}
+        >
           + Nuevo curso
         </button>
       </div>
@@ -76,14 +113,33 @@ export function CoursesPage() {
         columns={columns}
         rowKey={(course) => course.id}
       />
-      {open && (
+      {createOpen && (
         <CreateResourceModal
           title="Nuevo curso"
           fields={fields}
           isPending={create.isPending}
           error={create.error}
-          onClose={handleClose}
-          onSubmit={handleSubmit}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(data) =>
+            create.mutate(data, { onSuccess: () => setCreateOpen(false) })
+          }
+        />
+      )}
+      {editing && (
+        <CreateResourceModal
+          key={editing.id}
+          title="Editar curso"
+          fields={fields}
+          initialValues={toValues(editing)}
+          isPending={update.isPending}
+          error={update.error}
+          onClose={() => setEditing(null)}
+          onSubmit={(data) =>
+            update.mutate(
+              { id: editing.id, data },
+              { onSuccess: () => setEditing(null) },
+            )
+          }
         />
       )}
     </>

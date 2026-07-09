@@ -4,16 +4,21 @@ import type { Column } from '../components/DataTable'
 import { ResourceView } from '../components/ResourceView'
 import { StatusBadge } from '../components/StatusBadge'
 import { SearchBar } from '../components/SearchBar'
+import { RowActions } from '../components/RowActions'
 import {
   CreateResourceModal,
   type FormFieldDef,
 } from '../components/CreateResourceModal'
 import { useStudents, useUsers } from '../hooks/useResources'
 import { useDebounce } from '../hooks/useDebounce'
-import { useCreateStudent } from '../hooks/useMutations'
+import {
+  useCreateStudent,
+  useDeleteStudent,
+  useUpdateStudent,
+} from '../hooks/useMutations'
 import type { Student } from '../types/models'
 
-const columns: Column<Student>[] = [
+const baseColumns: Column<Student>[] = [
   {
     key: 'fullname',
     header: 'Apellidos y nombres',
@@ -23,11 +28,6 @@ const columns: Column<Student>[] = [
   },
   { key: 'gender', header: 'Género', render: (student) => student.gender ?? '—' },
   { key: 'phone', header: 'Teléfono', render: (student) => student.phone ?? '—' },
-  {
-    key: 'address',
-    header: 'Dirección',
-    render: (student) => student.address ?? '—',
-  },
   {
     key: 'status',
     header: 'Estado',
@@ -44,10 +44,25 @@ const columns: Column<Student>[] = [
   },
 ]
 
+function toValues(student: Student): Record<string, string> {
+  return {
+    names: student.names,
+    fatherSurname: student.fatherSurname,
+    motherSurname: student.motherSurname,
+    gender: student.gender ?? '',
+    phone: student.phone ?? '',
+    address: student.address ?? '',
+    user_id: student.user_id ?? '',
+  }
+}
+
 export function StudentsPage() {
   const [search, setSearch] = useState('')
-  const [open, setOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editing, setEditing] = useState<Student | null>(null)
   const create = useCreateStudent()
+  const update = useUpdateStudent()
+  const remove = useDeleteStudent()
   const users = useUsers()
   const query = useStudents(useDebounce(search))
 
@@ -76,13 +91,31 @@ export function StudentsPage() {
     },
   ]
 
-  function handleClose() {
-    setOpen(false)
-    create.reset()
-  }
+  const columns: Column<Student>[] = [
+    ...baseColumns,
+    {
+      key: 'actions',
+      header: 'Acciones',
+      render: (student) => (
+        <RowActions
+          onEdit={() => {
+            update.reset()
+            setEditing(student)
+          }}
+          onDelete={() => handleDelete(student)}
+        />
+      ),
+    },
+  ]
 
-  function handleSubmit(data: Record<string, string>) {
-    create.mutate(data, { onSuccess: handleClose })
+  function handleDelete(student: Student) {
+    if (
+      window.confirm(
+        `¿Eliminar a ${student.fatherSurname} ${student.motherSurname}, ${student.names}?`,
+      )
+    ) {
+      remove.mutate(student.id)
+    }
   }
 
   return (
@@ -93,7 +126,13 @@ export function StudentsPage() {
           onChange={setSearch}
           placeholder="Buscar por nombre o apellido…"
         />
-        <button className="btn-primary" onClick={() => setOpen(true)}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            create.reset()
+            setCreateOpen(true)
+          }}
+        >
           + Nuevo estudiante
         </button>
       </div>
@@ -103,14 +142,33 @@ export function StudentsPage() {
         columns={columns}
         rowKey={(student) => student.id}
       />
-      {open && (
+      {createOpen && (
         <CreateResourceModal
           title="Nuevo estudiante"
           fields={fields}
           isPending={create.isPending}
           error={create.error}
-          onClose={handleClose}
-          onSubmit={handleSubmit}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(data) =>
+            create.mutate(data, { onSuccess: () => setCreateOpen(false) })
+          }
+        />
+      )}
+      {editing && (
+        <CreateResourceModal
+          key={editing.id}
+          title="Editar estudiante"
+          fields={fields}
+          initialValues={toValues(editing)}
+          isPending={update.isPending}
+          error={update.error}
+          onClose={() => setEditing(null)}
+          onSubmit={(data) =>
+            update.mutate(
+              { id: editing.id, data },
+              { onSuccess: () => setEditing(null) },
+            )
+          }
         />
       )}
     </>

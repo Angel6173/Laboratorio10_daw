@@ -1,48 +1,48 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  createCourse,
-  createEnrollment,
-  createStudent,
-  createTeacher,
-  createUser,
-} from '../api/sismatApi'
+import * as api from '../api/sismatApi'
 
-export function useCreateUser() {
+type Payload = Record<string, string>
+
+function useCreate<T>(fn: (data: Payload) => Promise<T>, key: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: createUser,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+    mutationFn: fn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [key] }),
   })
 }
 
-export function useCreateStudent() {
+function useUpdate<T>(fn: (id: string, data: Payload) => Promise<T>, key: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: createStudent,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students'] }),
+    mutationFn: ({ id, data }: { id: string; data: Payload }) => fn(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [key] }),
   })
 }
 
-export function useCreateTeacher() {
+function useDelete(fn: (id: string) => Promise<unknown>, key: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: createTeacher,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['teachers'] }),
+    mutationFn: fn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [key] }),
   })
 }
 
-export function useCreateCourse() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: createCourse,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['courses'] }),
-  })
-}
+export const useCreateUser = () => useCreate(api.createUser, 'users')
+export const useUpdateUser = () => useUpdate(api.updateUser, 'users')
+export const useDeleteUser = () => useDelete(api.deleteUser, 'users')
 
-export function useCreateEnrollment() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: createEnrollment,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['enrollments'] }),
-  })
-}
+export const useCreateTeacher = () => useCreate(api.createTeacher, 'teachers')
+export const useUpdateTeacher = () => useUpdate(api.updateTeacher, 'teachers')
+export const useDeleteTeacher = () => useDelete(api.deleteTeacher, 'teachers')
+
+export const useCreateStudent = () => useCreate(api.createStudent, 'students')
+export const useUpdateStudent = () => useUpdate(api.updateStudent, 'students')
+export const useDeleteStudent = () => useDelete(api.deleteStudent, 'students')
+
+export const useCreateCourse = () => useCreate(api.createCourse, 'courses')
+export const useUpdateCourse = () => useUpdate(api.updateCourse, 'courses')
+export const useDeleteCourse = () => useDelete(api.deleteCourse, 'courses')
+
+export const useCreateEnrollment = () => useCreate(api.createEnrollment, 'enrollments')
+export const useUpdateEnrollment = () => useUpdate(api.updateEnrollment, 'enrollments')
+export const useDeleteEnrollment = () => useDelete(api.deleteEnrollment, 'enrollments')

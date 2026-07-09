@@ -3,16 +3,21 @@ import type { Column } from '../components/DataTable'
 import { ResourceView } from '../components/ResourceView'
 import { StatusBadge } from '../components/StatusBadge'
 import { SearchBar } from '../components/SearchBar'
+import { RowActions } from '../components/RowActions'
 import {
   CreateResourceModal,
   type FormFieldDef,
 } from '../components/CreateResourceModal'
 import { useUsers } from '../hooks/useResources'
 import { useDebounce } from '../hooks/useDebounce'
-import { useCreateUser } from '../hooks/useMutations'
+import {
+  useCreateUser,
+  useDeleteUser,
+  useUpdateUser,
+} from '../hooks/useMutations'
 import type { User } from '../types/models'
 
-const columns: Column<User>[] = [
+const baseColumns: Column<User>[] = [
   { key: 'email', header: 'Email', className: 'cell-strong' },
   {
     key: 'role',
@@ -24,52 +29,73 @@ const columns: Column<User>[] = [
     header: 'Estado',
     render: (user) => <StatusBadge status={user.status} />,
   },
-  {
-    key: 'created',
-    header: 'Creado',
-    render: (user) => new Date(user.created).toLocaleDateString('es-PE'),
-  },
 ]
 
-const fields: FormFieldDef[] = [
+const roleOptions = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'teacher', label: 'Docente' },
+  { value: 'student', label: 'Estudiante' },
+]
+
+const statusOptions = [
+  { value: 'active', label: 'Activo' },
+  { value: 'inactive', label: 'Inactivo' },
+  { value: 'suspended', label: 'Suspendido' },
+]
+
+const createFields: FormFieldDef[] = [
   { name: 'email', label: 'Email', type: 'email', required: true },
   { name: 'password', label: 'Contraseña', type: 'password', required: true },
-  {
-    name: 'role',
-    label: 'Rol',
-    type: 'select',
-    required: true,
-    options: [
-      { value: 'admin', label: 'Admin' },
-      { value: 'teacher', label: 'Docente' },
-      { value: 'student', label: 'Estudiante' },
-    ],
-  },
-  {
-    name: 'status',
-    label: 'Estado',
-    type: 'select',
-    options: [
-      { value: 'active', label: 'Activo' },
-      { value: 'inactive', label: 'Inactivo' },
-      { value: 'suspended', label: 'Suspendido' },
-    ],
-  },
+  { name: 'role', label: 'Rol', type: 'select', required: true, options: roleOptions },
+  { name: 'status', label: 'Estado', type: 'select', options: statusOptions },
 ]
+
+const editFields: FormFieldDef[] = [
+  { name: 'email', label: 'Email', type: 'email', required: true },
+  {
+    name: 'password',
+    label: 'Contraseña',
+    type: 'password',
+    placeholder: 'dejar en blanco para no cambiar',
+  },
+  { name: 'role', label: 'Rol', type: 'select', required: true, options: roleOptions },
+  { name: 'status', label: 'Estado', type: 'select', options: statusOptions },
+]
+
+function toValues(user: User): Record<string, string> {
+  return { email: user.email, role: user.role, status: user.status }
+}
 
 export function UsersPage() {
   const [search, setSearch] = useState('')
-  const [open, setOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editing, setEditing] = useState<User | null>(null)
   const create = useCreateUser()
+  const update = useUpdateUser()
+  const remove = useDeleteUser()
   const query = useUsers(useDebounce(search))
 
-  function handleClose() {
-    setOpen(false)
-    create.reset()
-  }
+  const columns: Column<User>[] = [
+    ...baseColumns,
+    {
+      key: 'actions',
+      header: 'Acciones',
+      render: (user) => (
+        <RowActions
+          onEdit={() => {
+            update.reset()
+            setEditing(user)
+          }}
+          onDelete={() => handleDelete(user)}
+        />
+      ),
+    },
+  ]
 
-  function handleSubmit(data: Record<string, string>) {
-    create.mutate(data, { onSuccess: handleClose })
+  function handleDelete(user: User) {
+    if (window.confirm(`¿Eliminar el usuario ${user.email}?`)) {
+      remove.mutate(user.id)
+    }
   }
 
   return (
@@ -80,7 +106,13 @@ export function UsersPage() {
           onChange={setSearch}
           placeholder="Buscar por email…"
         />
-        <button className="btn-primary" onClick={() => setOpen(true)}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            create.reset()
+            setCreateOpen(true)
+          }}
+        >
           + Nuevo usuario
         </button>
       </div>
@@ -90,14 +122,33 @@ export function UsersPage() {
         columns={columns}
         rowKey={(user) => user.id}
       />
-      {open && (
+      {createOpen && (
         <CreateResourceModal
           title="Nuevo usuario"
-          fields={fields}
+          fields={createFields}
           isPending={create.isPending}
           error={create.error}
-          onClose={handleClose}
-          onSubmit={handleSubmit}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(data) =>
+            create.mutate(data, { onSuccess: () => setCreateOpen(false) })
+          }
+        />
+      )}
+      {editing && (
+        <CreateResourceModal
+          key={editing.id}
+          title="Editar usuario"
+          fields={editFields}
+          initialValues={toValues(editing)}
+          isPending={update.isPending}
+          error={update.error}
+          onClose={() => setEditing(null)}
+          onSubmit={(data) =>
+            update.mutate(
+              { id: editing.id, data },
+              { onSuccess: () => setEditing(null) },
+            )
+          }
         />
       )}
     </>

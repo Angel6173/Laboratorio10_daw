@@ -12,6 +12,7 @@ export interface FormFieldDef {
 interface CreateResourceModalProps {
   title: string
   fields: FormFieldDef[]
+  initialValues?: Record<string, string>
   isPending: boolean
   error: Error | null
   onClose: () => void
@@ -21,12 +22,15 @@ interface CreateResourceModalProps {
 export function CreateResourceModal({
   title,
   fields,
+  initialValues,
   isPending,
   error,
   onClose,
   onSubmit,
 }: CreateResourceModalProps) {
-  const [values, setValues] = useState<Record<string, string>>({})
+  const [values, setValues] = useState<Record<string, string>>(
+    initialValues ?? {},
+  )
 
   function setField(name: string, value: string) {
     setValues((prev) => ({ ...prev, [name]: value }))
