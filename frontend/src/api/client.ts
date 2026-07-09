@@ -37,7 +37,15 @@ export async function apiFetch<T>(
     let message = `Error ${response.status}`
     try {
       const body = await response.json()
-      if (body?.detail) message = body.detail
+      if (body?.detail) {
+        message = body.detail
+      } else if (body && typeof body === 'object') {
+        const parts = Object.entries(body).map(
+          ([field, msgs]) =>
+            `${field}: ${Array.isArray(msgs) ? msgs.join(' ') : msgs}`,
+        )
+        if (parts.length) message = parts.join(' · ')
+      }
     } catch {}
     throw new Error(message)
   }
