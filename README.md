@@ -7,7 +7,7 @@ Sistema completo de matrícula de laboratorio (**SISMAT**): un backend Django qu
 
 ---
 
-## 🌐 Enlaces en vivo
+##  Enlaces en vivo
 
 | Qué | URL |
 |---|---|
@@ -19,7 +19,7 @@ Sistema completo de matrícula de laboratorio (**SISMAT**): un backend Django qu
 
 ---
 
-## 🧩 Stack tecnológico
+##  Stack tecnológico
 
 | Capa | Tecnología |
 |---|---|
@@ -35,7 +35,7 @@ Sistema completo de matrícula de laboratorio (**SISMAT**): un backend Django qu
 
 ---
 
-## 📁 Estructura del proyecto
+##  Estructura del proyecto
 
 ```
 Laboratorio10_daw/
@@ -55,7 +55,7 @@ Laboratorio10_daw/
 
 ---
 
-## ✅ Requisitos previos
+##  Requisitos previos
 
 | Herramienta | Versión |
 |---|---|
